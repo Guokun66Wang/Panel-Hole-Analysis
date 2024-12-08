@@ -1,0 +1,59 @@
+Pseudocode as follows:
+import os
+import pyodbc
+
+# Connect to SQL Server database
+conn = pyodbc.connect('DRIVER={SQL Server};SERVER=Server Address;DATABASE=Database Name;UID=Username;PWD=Password')
+cursor = conn.cursor()
+
+# Create table if it does not exist
+cursor.execute('''
+    IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'BoardPieces')
+    BEGIN
+        CREATE TABLE BoardPieces (
+            BoardCode VARCHAR(50) PRIMARY KEY,
+            ProcessingType VARCHAR(50),
+            Parameter1 INT,
+            Parameter2 INT,
+            Parameter3 INT,
+            Parameter4 INT,
+            Parameter5 INT,
+            Parameter6 VARCHAR(50)
+        )
+    END
+''')
+
+# Specify file path
+directory = '/file/path'
+
+# Traverse all files in the specified path
+for filename in os.listdir(directory):
+    if filename.endswith('.MPR'):
+        filepath = os.path.join(directory, filename)
+
+        # Parse the file and extract data
+        with open(filepath, 'r') as file:
+            lines = file.readlines()
+
+            # Process the file content and extract the required information
+            for line in lines:
+                line = line.strip().split('\t')
+                board_code = line[0]
+                processing_type = line[1]
+                parameter1 = int(line[2])
+                parameter2 = int(line[3])
+                parameter3 = int(line[4])
+                parameter4 = int(line[5])
+                parameter5 = int(line[6])
+                parameter6 = line[7]
+
+                # Insert data into database
+                cursor.execute("INSERT INTO BoardPieces (BoardCode, ProcessingType, Parameter1, Parameter2, Parameter3, Parameter4, Parameter5, Parameter6) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", board_code, processing_type, parameter1, parameter2, parameter3, parameter4, parameter5, parameter6)
+
+# Commit transaction
+conn.commit()
+
+# Close connection
+cursor.close()
+conn.close()
+
