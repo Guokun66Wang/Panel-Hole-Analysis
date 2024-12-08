@@ -1,0 +1,68 @@
+# Import necessary libraries
+import numpy as np
+import pandas as pd
+
+# Define the COING clustering method
+def coing_clustering(panel_data):
+    """
+    Perform clustering analysis on the panel's hole positions using the COING method.
+    
+    :param panel_data: List of tuples representing hole positions [(x1, y1), (x2, y2), ...]
+    :return: List of clusters, where each cluster is a list of hole positions
+    """
+    # Initialize clusters
+    clusters = []
+    unprocessed_points = panel_data.copy()
+
+    # Step 3: Repeat until all points are clustered
+    while unprocessed_points:
+        # Step 3a: Select the point closest to the origin as the first member of a new cluster
+        origin = (0, 0)
+        closest_point = min(unprocessed_points, key=lambda p: np.sqrt((p[0] - origin[0])**2 + (p[1] - origin[1])**2))
+        cluster = [closest_point]
+        unprocessed_points.remove(closest_point)
+
+        # Step 3b-e: Add points with the same X or Y coordinates to the current cluster
+        cluster_updated = True
+        while cluster_updated:
+            cluster_updated = False
+            for point in unprocessed_points:
+                if any(point[0] == c[0] or point[1] == c[1] for c in cluster):
+                    cluster.append(point)
+                    unprocessed_points.remove(point)
+                    cluster_updated = True
+
+        # Add the completed cluster to the list of clusters
+        clusters.append(cluster)
+
+    return clusters
+
+# Analyze clusters for specific panel data
+def analyze_clusters(clusters):
+    """
+    Analyze clusters for patterns such as hole size and distribution.
+    
+    :param clusters: List of clusters, where each cluster is a list of hole positions
+    """
+    for i, cluster in enumerate(clusters):
+        print(f"Cluster {i+1}:")
+        print(f"  Number of holes: {len(cluster)}")
+        
+        # Example analysis: Check for frequently appearing hole sizes
+        hole_sizes = [(abs(p1[0] - p2[0]), abs(p1[1] - p2[1])) for p1, p2 in zip(cluster[:-1], cluster[1:])]
+        freq_sizes = {size: hole_sizes.count(size) for size in set(hole_sizes)}
+        print(f"  Frequent hole sizes: {freq_sizes}")
+
+# Example usage
+if __name__ == "__main__":
+    # Example panel data: List of hole positions
+    panel_data = [
+        (0, 0), (0, 32), (0, 64), (8, 32), (8, 22),
+        (50, 0), (50, 32), (100, 0), (100, 22)
+    ]
+
+    # Step 1: Perform clustering
+    clusters = coing_clustering(panel_data)
+
+    # Step 2: Analyze clusters
+    analyze_clusters(clusters)
